@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --border: #e3e5ea;
+  --text: #1c2130;
+  --muted: #68708a;
+  --accent: #3457d5;
+  --accent-text: #ffffff;
+  --ok: #1d7a4c;
+  --ok-bg: #e2f4ea;
+  --soon: #96600a;
+  --soon-bg: #fcf0d6;
+  --critical: #b3401a;
+  --critical-bg: #fde6dc;
+  --expired: #a3182b;
+  --expired-bg: #fbdfe3;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12141a;
+    --surface: #1b1e27;
+    --surface-2: #222632;
+    --border: #2f3442;
+    --text: #e8eaf0;
+    --muted: #969db3;
+    --accent: #7d97ff;
+    --accent-text: #10131c;
+    --ok: #6fd6a0;
+    --ok-bg: #173526;
+    --soon: #f0c264;
+    --soon-bg: #3a2e12;
+    --critical: #ff9d78;
+    --critical-bg: #40221a;
+    --expired: #ff8b9a;
+    --expired-bg: #421a21;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.brand { font-weight: 700; font-size: 16px; padding: 4px 12px 16px; }
+.nav-btn {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; padding: 9px 12px;
+  border: 0; border-radius: 8px; background: none;
+  text-align: left; cursor: pointer; color: var(--muted); font-weight: 500;
+}
+.nav-btn:hover { background: var(--surface-2); color: var(--text); }
+.nav-btn.active { background: var(--accent); color: var(--accent-text); }
+.nav-btn .count { font-size: 12px; opacity: .8; }
+.sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 16px; }
+.sidebar-foot small { color: var(--muted); padding: 6px 4px 0; }
+
+/* Main */
+main { padding: 28px 32px; min-width: 0; }
+.view-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+h1 { font-size: 22px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 12px; }
+
+.btn {
+  padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-weight: 500; white-space: nowrap;
+}
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn.danger { color: var(--expired); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.tile .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.tile .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+.tile.expired .value { color: var(--expired); }
+.tile.critical .value { color: var(--critical); }
+.tile.soon .value { color: var(--soon); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.toolbar input[type="search"] { flex: 1 1 220px; }
+input, select, textarea {
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); min-width: 0;
+}
+input:focus, select:focus, textarea:focus, .btn:focus-visible, .nav-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.card .table-wrap { border: 0; border-radius: 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--surface-2); }
+td.actions { text-align: right; }
+td.actions .btn { margin-left: 4px; }
+td .sub { color: var(--muted); font-size: 12px; }
+td.wrap { white-space: normal; min-width: 160px; }
+.empty { padding: 32px; text-align: center; color: var(--muted); }
+
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.badge.ok { color: var(--ok); background: var(--ok-bg); }
+.badge.soon { color: var(--soon); background: var(--soon-bg); }
+.badge.critical { color: var(--critical); background: var(--critical-bg); }
+.badge.expired { color: var(--expired); background: var(--expired-bg); }
+
+/* Dialogs */
+dialog {
+  border: 1px solid var(--border); border-radius: 12px; padding: 0;
+  background: var(--surface); color: var(--text);
+  width: min(520px, calc(100vw - 32px));
+}
+dialog::backdrop { background: rgba(10, 12, 20, .55); }
+dialog form { padding: 22px; }
+dialog h2 { font-size: 18px; margin-bottom: 16px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field.full { grid-column: 1 / -1; }
+.field span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.field.check { flex-direction: row; align-items: center; gap: 8px; }
+.field.check span { font-size: 14px; color: var(--text); font-weight: 400; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 1px solid var(--border); padding: 10px 12px; }
+  .brand { padding: 4px 8px; width: 100%; }
+  .nav-btn { width: auto; gap: 8px; }
+  .sidebar-foot { flex-direction: row; margin: 0 0 0 auto; padding: 0; }
+  .sidebar-foot small { display: none; }
+  main { padding: 18px 16px; }
+  .fields { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">Admin Dashboard</div>
+    <button class="nav-btn active" data-view="overview">Overview</button>
+    <button class="nav-btn" data-view="clients">Clients <span class="count" id="navClients"></span></button>
+    <button class="nav-btn" data-view="domains">Domains <span class="count" id="navDomains"></span></button>
+    <div class="sidebar-foot">
+      <button class="btn small" id="exportBtn">Export backup</button>
+      <button class="btn small" id="importBtn">Import backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <small>Data is saved in this browser only. Export a backup regularly.</small>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Overview -->
+    <section id="view-overview">
+      <div class="view-head"><h1>Overview</h1></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="card">
+        <h2>Needs attention (expired or expiring within 90 days)</h2>
+        <div class="table-wrap" id="attention"></div>
+      </div>
+    </section>
+
+    <!-- Clients -->
+    <section id="view-clients" hidden>
+      <div class="view-head">
+        <h1>Clients</h1>
+        <button class="btn primary" data-action="add-client">+ Add client</button>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="clientSearch" placeholder="Search name, company, email, phone…">
+      </div>
+      <div class="table-wrap" id="clientsTable"></div>
+    </section>
+
+    <!-- Domains -->
+    <section id="view-domains" hidden>
+      <div class="view-head">
+        <h1>Domains</h1>
+        <button class="btn primary" data-action="add-domain">+ Add domain</button>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="domainSearch" placeholder="Search domain, client, registrar…">
+        <select id="domainClientFilter"></select>
+        <select id="domainStatusFilter">
+          <option value="">All statuses</option>
+          <option value="expired">Expired</option>
+          <option value="critical">Expiring ≤ 30 days</option>
+          <option value="soon">Expiring ≤ 90 days</option>
+          <option value="ok">Active</option>
+        </select>
+      </div>
+      <div class="table-wrap" id="domainsTable"></div>
+    </section>
+  </main>
+</div>
+
+<dialog id="clientDialog">
+  <form id="clientForm">
+    <h2 id="clientDialogTitle">Add client</h2>
+    <div class="fields">
+      <label class="field"><span>Name *</span><input name="name" required maxlength="120"></label>
+      <label class="field"><span>Company</span><input name="company" maxlength="120"></label>
+      <label class="field"><span>Email</span><input name="email" type="email" maxlength="160"></label>
+      <label class="field"><span>Phone</span><input name="phone" type="tel" maxlength="40"></label>
+      <label class="field full"><span>Address</span><input name="address" maxlength="240"></label>
+      <label class="field full"><span>Notes</span><textarea name="notes" rows="3"></textarea></label>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="domainDialog">
+  <form id="domainForm">
+    <h2 id="domainDialogTitle">Add domain</h2>
+    <div class="fields">
+      <label class="field full"><span>Domain name *</span><input name="name" required maxlength="253" placeholder="example.com"></label>
+      <label class="field"><span>Client</span><select name="clientId"></select></label>
+      <label class="field"><span>Registrar</span><input name="registrar" maxlength="120" placeholder="GoDaddy, Namecheap…"></label>
+      <label class="field"><span>Registration date</span><input name="registered" type="date"></label>
+      <label class="field"><span>Expiry date *</span><input name="expiry" type="date" required></label>
+      <label class="field"><span>Renewal cost</span><input name="cost" type="number" min="0" step="0.01"></label>
+      <label class="field check"><input name="autoRenew" type="checkbox"><span>Auto-renew enabled</span></label>
+      <label class="field full"><span>Notes</span><textarea name="notes" rows="3"></textarea></label>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'adminDashboard.v1';
+  const DAY = 86400000;
+  const $ = (id) => document.getElementById(id);
+
+  let state = load();
+  let editingClientId = null;
+  let editingDomainId = null;
+
+  // ---------- storage ----------
+  function isValidData(d) {
+    return d && Array.isArray(d.clients) && Array.isArray(d.domains);
+  }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (isValidData(d)) return d;
+    } catch {}
+    return { clients: [], domains: [] };
+  }
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      alert('Could not save to browser storage: ' + e.message);
+    }
+  }
+  function newId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  // ---------- helpers ----------
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+  // Dates are stored as YYYY-MM-DD and treated as local calendar days.
+  function parseDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  function toISO(d) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function fmtDate(s) {
+    const d = parseDate(s);
+    return d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+  }
+  function daysLeft(s) {
+    const d = parseDate(s);
+    if (!d) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((d - today) / DAY);
+  }
+  function statusOf(domain) {
+    const n = daysLeft(domain.expiry);
+    if (n === null) return { key: 'ok', label: 'No date', days: Infinity };
+    if (n < 0) return { key: 'expired', label: `Expired ${-n}d ago`, days: n };
+    if (n === 0) return { key: 'critical', label: 'Expires today', days: n };
+    if (n <= 30) return { key: 'critical', label: `${n}d left`, days: n };
+    if (n <= 90) return { key: 'soon', label: `${n}d left`, days: n };
+    return { key: 'ok', label: `${n}d left`, days: n };
+  }
+  function badge(st) {
+    return `<span class="badge ${st.key}">${esc(st.label)}</span>`;
+  }
+  function clientById(id) {
+    return state.clients.find((c) => c.id === id);
+  }
+  function clientName(id) {
+    const c = clientById(id);
+    return c ? c.name : '';
+  }
+  function byExpiry(a, b) {
+    return statusOf(a).days - statusOf(b).days;
+  }
+
+  // ---------- rendering ----------
+  function render() {
+    $('navClients').textContent = state.clients.length;
+    $('navDomains').textContent = state.domains.length;
+    renderOverview();
+    renderClientFilter();
+    renderClients();
+    renderDomains();
+  }
+
+  function domainRows(list, compact) {
+    return list.map((d) => {
+      const st = statusOf(d);
+      const client = clientName(d.clientId);
+      return `<tr>
+        <td><strong>${esc(d.name)}</strong>${d.notes && !compact ? `<div class="sub">${esc(d.notes)}</div>` : ''}</td>
+        <td>${client ? esc(client) : '<span class="sub">Unassigned</span>'}</td>
+        ${compact ? '' : `<td>${esc(d.registrar) || '—'}</td><td>${fmtDate(d.registered)}</td>`}
+        <td>${fmtDate(d.expiry)}</td>
+        <td>${badge(st)}</td>
+        ${compact ? '' : `<td>${d.autoRenew ? 'Yes' : 'No'}</td><td>${d.cost !== '' && d.cost != null ? esc(Number(d.cost).toFixed(2)) : '—'}</td>`}
+        <td class="actions">
+          <button class="btn small" data-action="renew-domain" data-id="${esc(d.id)}" title="Extend expiry by one year">+1 yr</button>
+          <button class="btn small" data-action="edit-domain" data-id="${esc(d.id)}">Edit</button>
+          ${compact ? '' : `<button class="btn small danger" data-action="delete-domain" data-id="${esc(d.id)}">Delete</button>`}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderOverview() {
+    const counts = { expired: 0, critical: 0, soon: 0, ok: 0 };
+    state.domains.forEach((d) => counts[statusOf(d).key]++);
+    const tiles = [
+      ['Clients', state.clients.length, ''],
+      ['Domains', state.domains.length, ''],
+      ['Expired', counts.expired, counts.expired ? 'expired' : ''],
+      ['Expiring ≤ 30 days', counts.critical, counts.critical ? 'critical' : ''],
+      ['Expiring ≤ 90 days', counts.soon, counts.soon ? 'soon' : ''],
+    ];
+    $('tiles').innerHTML = tiles.map(([label, value, cls]) =>
+      `<div class="tile ${cls}"><div class="label">${label}</div><div class="value">${value}</div></div>`
+    ).join('');
+
+    const attention = state.domains.filter((d) => statusOf(d).key !== 'ok').sort(byExpiry);
+    $('attention').innerHTML = attention.length
+      ? `<table><thead><tr><th>Domain</th><th>Client</th><th>Expiry</th><th>Status</th><th></th></tr></thead>
+         <tbody>${domainRows(attention, true)}</tbody></table>`
+      : `<div class="empty">${state.domains.length ? 'Nothing expiring in the next 90 days.' : 'No domains yet. Add clients and domains to get started.'}</div>`;
+  }
+
+  function renderClients() {
+    const q = $('clientSearch').value.trim().toLowerCase();
+    const list = state.clients
+      .filter((c) => !q || [c.name, c.company, c.email, c.phone, c.address, c.notes].some((v) => (v || '').toLowerCase().includes(q)))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!list.length) {
+      $('clientsTable').innerHTML = `<div class="empty">${state.clients.length ? 'No clients match your search.' : 'No clients yet. Click “Add client” to create one.'}</div>`;
+      return;
+    }
+    $('clientsTable').innerHTML = `<table>
+      <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Domains</th><th>Next expiry</th><th></th></tr></thead>
+      <tbody>${list.map((c) => {
+        const domains = state.domains.filter((d) => d.clientId === c.id).sort(byExpiry);
+        const next = domains[0];
+        return `<tr>
+          <td><strong>${esc(c.name)}</strong>${c.company ? `<div class="sub">${esc(c.company)}</div>` : ''}</td>
+          <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '—'}</td>
+          <td>${esc(c.phone) || '—'}</td>
+          <td>${domains.length}</td>
+          <td>${next ? `${esc(next.name)} ${badge(statusOf(next))}` : '—'}</td>
+          <td class="actions">
+            <button class="btn small" data-action="add-domain" data-client="${esc(c.id)}">+ Domain</button>
+            <button class="btn small" data-action="view-client-domains" data-id="${esc(c.id)}">Domains</button>
+            <button class="btn small" data-action="edit-client" data-id="${esc(c.id)}">Edit</button>
+            <button class="btn small danger" data-action="delete-client" data-id="${esc(c.id)}">Delete</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+  }
+
+  function clientOptions(selected, emptyLabel) {
+    const sorted = [...state.clients].sort((a, b) => a.name.localeCompare(b.name));
+    return `<option value="">${emptyLabel}</option>` + sorted.map((c) =>
+      `<option value="${esc(c.id)}"${c.id === selected ? ' selected' : ''}>${esc(c.name)}${c.company ? ' — ' + esc(c.company) : ''}</option>`
+    ).join('');
+  }
+
+  function renderClientFilter() {
+    const sel = $('domainClientFilter');
+    const current = clientById(sel.value) ? sel.value : '';
+    sel.innerHTML = clientOptions(current, 'All clients');
+  }
+
+  function renderDomains() {
+    const q = $('domainSearch').value.trim().toLowerCase();
+    const clientId = $('domainClientFilter').value;
+    const status = $('domainStatusFilter').value;
+    const list = state.domains.filter((d) => {
+      if (clientId && d.clientId !== clientId) return false;
+      if (status && statusOf(d).key !== status) return false;
+      if (!q) return true;
+      return [d.name, d.registrar, d.notes, clientName(d.clientId)].some((v) => (v || '').toLowerCase().includes(q));
+    }).sort(byExpiry);
+
+    if (!list.length) {
+      $('domainsTable').innerHTML = `<div class="empty">${state.domains.length ? 'No domains match your filters.' : 'No domains yet. Click “Add domain” to create one.'}</div>`;
+      return;
+    }
+    $('domainsTable').innerHTML = `<table>
+      <thead><tr><th>Domain</th><th>Client</th><th>Registrar</th><th>Registered</th><th>Expiry</th><th>Status</th><th>Auto-renew</th><th>Cost</th><th></th></tr></thead>
+      <tbody>${domainRows(list, false)}</tbody></table>`;
+  }
+
+  // ---------- navigation ----------
+  function showView(name) {
+    ['overview', 'clients', 'domains'].forEach((v) => { $('view-' + v).hidden = v !== name; });
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  }
+
+  // ---------- client dialog ----------
+  function openClientDialog(id) {
+    editingClientId = id || null;
+    const form = $('clientForm');
+    form.reset();
+    const c = id ? clientById(id) : null;
+    $('clientDialogTitle').textContent = c ? 'Edit client' : 'Add client';
+    if (c) ['name', 'company', 'email', 'phone', 'address', 'notes'].forEach((k) => { form.elements[k].value = c[k] || ''; });
+    $('clientDialog').showModal();
+  }
+
+  $('clientForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target.elements;
+    const data = {
+      name: f.name.value.trim(),
+      company: f.company.value.trim(),
+      email: f.email.value.trim(),
+      phone: f.phone.value.trim(),
+      address: f.address.value.trim(),
+      notes: f.notes.value.trim(),
+    };
+    if (!data.name) return;
+    if (editingClientId) Object.assign(clientById(editingClientId), data);
+    else state.clients.push({ id: newId(), ...data });
+    save();
+    $('clientDialog').close();
+    render();
+  });
+
+  function deleteClient(id) {
+    const c = clientById(id);
+    if (!c) return;
+    const owned = state.domains.filter((d) => d.clientId === id).length;
+    const msg = owned
+      ? `Delete client "${c.name}" and their ${owned} domain${owned === 1 ? '' : 's'}? This cannot be undone.`
+      : `Delete client "${c.name}"? This cannot be undone.`;
+    if (!confirm(msg)) return;
+    state.clients = state.clients.filter((x) => x.id !== id);
+    state.domains = state.domains.filter((d) => d.clientId !== id);
+    save();
+    render();
+  }
+
+  // ---------- domain dialog ----------
+  function openDomainDialog(id, presetClientId) {
+    editingDomainId = id || null;
+    const form = $('domainForm');
+    form.reset();
+    const d = id ? state.domains.find((x) => x.id === id) : null;
+    $('domainDialogTitle').textContent = d ? 'Edit domain' : 'Add domain';
+    form.elements.clientId.innerHTML = clientOptions(d ? d.clientId : presetClientId, '— No client —');
+    if (d) {
+      form.elements.name.value = d.name || '';
+      form.elements.registrar.value = d.registrar || '';
+      form.elements.registered.value = d.registered || '';
+      form.elements.expiry.value = d.expiry || '';
+      form.elements.cost.value = d.cost ?? '';
+      form.elements.autoRenew.checked = !!d.autoRenew;
+      form.elements.notes.value = d.notes || '';
+    }
+    $('domainDialog').showModal();
+  }
+
+  $('domainForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target.elements;
+    const data = {
+      name: f.name.value.trim().toLowerCase(),
+      clientId: f.clientId.value,
+      registrar: f.registrar.value.trim(),
+      registered: f.registered.value,
+      expiry: f.expiry.value,
+      cost: f.cost.value,
+      autoRenew: f.autoRenew.checked,
+      notes: f.notes.value.trim(),
+    };
+    if (!data.name || !data.expiry) return;
+    if (data.registered && data.registered > data.expiry) {
+      alert('Expiry date must be after the registration date.');
+      return;
+    }
+    const duplicate = state.domains.some((d) => d.name === data.name && d.id !== editingDomainId);
+    if (duplicate && !confirm(`"${data.name}" is already in the list. Save anyway?`)) return;
+
+    if (editingDomainId) Object.assign(state.domains.find((d) => d.id === editingDomainId), data);
+    else state.domains.push({ id: newId(), ...data });
+    save();
+    $('domainDialog').close();
+    render();
+  });
+
+  function renewDomain(id) {
+    const d = state.domains.find((x) => x.id === id);
+    const date = d && parseDate(d.expiry);
+    if (!date) return;
+    const month = date.getMonth();
+    date.setFullYear(date.getFullYear() + 1);
+    if (date.getMonth() !== month) date.setDate(0); // Feb 29 -> Feb 28
+    if (!confirm(`Extend ${d.name} to ${fmtDate(toISO(date))}?`)) return;
+    d.expiry = toISO(date);
+    save();
+    render();
+  }
+
+  function deleteDomain(id) {
+    const d = state.domains.find((x) => x.id === id);
+    if (!d || !confirm(`Delete domain "${d.name}"? This cannot be undone.`)) return;
+    state.domains = state.domains.filter((x) => x.id !== id);
+    save();
+    render();
+  }
+
+  // ---------- backup ----------
+  $('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `admin-dashboard-backup-${toISO(new Date())}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (!isValidData(data)) throw new Error('File is not a dashboard backup.');
+      const msg = `Replace current data (${state.clients.length} clients, ${state.domains.length} domains) with the backup (${data.clients.length} clients, ${data.domains.length} domains)?`;
+      if (!confirm(msg)) return;
+      state = { clients: data.clients, domains: data.domains };
+      save();
+      render();
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  });
+
+  // ---------- events ----------
+  document.addEventListener('click', (e) => {
+    const nav = e.target.closest('.nav-btn');
+    if (nav) return showView(nav.dataset.view);
+
+    const closer = e.target.closest('[data-close]');
+    if (closer) return closer.closest('dialog').close();
+
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { action, id, client } = btn.dataset;
+    switch (action) {
+      case 'add-client': return openClientDialog();
+      case 'edit-client': return openClientDialog(id);
+      case 'delete-client': return deleteClient(id);
+      case 'view-client-domains':
+        $('domainSearch').value = '';
+        $('domainStatusFilter').value = '';
+        $('domainClientFilter').value = id;
+        renderDomains();
+        return showView('domains');
+      case 'add-domain': return openDomainDialog(null, client || $('domainClientFilter').value);
+      case 'edit-domain': return openDomainDialog(id);
+      case 'renew-domain': return renewDomain(id);
+      case 'delete-domain': return deleteDomain(id);
+    }
+  });
+
+  $('clientSearch').addEventListener('input', renderClients);
+  $('domainSearch').addEventListener('input', renderDomains);
+  $('domainClientFilter').addEventListener('change', renderDomains);
+  $('domainStatusFilter').addEventListener('change', renderDomains);
+
+  render();
+})();
+</script>
+</body>
+</html>
